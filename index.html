@@ -330,4 +330,581 @@ function paymentHistory(cid) {
 
 function closePayment() {
   document.getElementById("paymentOverlay")?.remove();
-}</script></body></html>
+}/* =====================================================
+   LADY HEAL — BILINGUAL ASSESSMENT MODULE
+   DEMO ONLY — USE FICTIONAL CLIENT INFORMATION
+===================================================== */
+
+let assessmentDraft = {};
+let assessmentType = "massage";
+let assessmentLanguage = lang;
+let assessmentSignature = "";
+let assessmentActive = false;
+
+const assessmentQuestions = {
+  massage: [
+    {
+      section: ["Motivo de consulta", "Reason for Visit"],
+      questions: [
+        ["reason", "¿Cuál es el motivo de su visita?", "What brings you in today?", "textarea"],
+        ["pain", "¿Presenta dolor actualmente?", "Are you currently experiencing pain?", "yesno"],
+        ["painArea", "¿Dónde presenta dolor?", "Where is your pain located?", "text"],
+        ["painLevel", "Nivel de dolor (0–10)", "Pain level (0–10)", "pain"],
+        ["focus", "¿Qué áreas desea trabajar?", "Which areas would you like us to focus on?", "textarea"],
+        ["avoid", "¿Qué áreas debemos evitar?", "Which areas should we avoid?", "textarea"],
+        ["pressure", "Presión preferida", "Preferred pressure", "pressure"]
+      ]
+    },
+    {
+      section: ["Antecedentes médicos", "Medical History"],
+      questions: [
+        ["heart", "¿Tiene alguna enfermedad cardíaca?", "Do you have heart disease?", "yesno"],
+        ["bloodPressure", "¿Tiene presión arterial alta o baja?", "Do you have high or low blood pressure?", "yesno"],
+        ["diabetes", "¿Tiene diabetes?", "Do you have diabetes?", "yesno"],
+        ["cancer", "¿Tiene antecedentes de cáncer?", "Do you have a history of cancer?", "yesno"],
+        ["clots", "¿Tiene antecedentes de trombosis o coágulos?", "Do you have a history of blood clots or DVT?", "yesno"],
+        ["lymphedema", "¿Tiene diagnóstico de linfedema?", "Have you been diagnosed with lymphedema?", "yesno"],
+        ["kidney", "¿Tiene enfermedad renal?", "Do you have kidney disease?", "yesno"],
+        ["arthritis", "¿Tiene artritis u osteoporosis?", "Do you have arthritis or osteoporosis?", "yesno"],
+        ["neuropathy", "¿Tiene neuropatía?", "Do you have neuropathy?", "yesno"],
+        ["fibromyalgia", "¿Tiene fibromialgia?", "Do you have fibromyalgia?", "yesno"],
+        ["infection", "¿Tiene fiebre o infección activa?", "Do you have a fever or active infection?", "yesno"],
+        ["wounds", "¿Tiene heridas abiertas o lesiones recientes?", "Do you have open wounds or recent injuries?", "yesno"],
+        ["pregnancy", "¿Está embarazada o podría estarlo?", "Are you pregnant or possibly pregnant?", "yesno"],
+        ["medications", "¿Qué medicamentos toma actualmente?", "What medications are you currently taking?", "textarea"],
+        ["bloodThinners", "¿Toma anticoagulantes?", "Are you taking blood thinners?", "yesno"],
+        ["allergies", "¿Tiene alergias a productos o ingredientes?", "Do you have allergies to products or ingredients?", "textarea"],
+        ["medicalDetails", "Explique cualquier respuesta médica relevante", "Please explain any relevant medical answers", "textarea"]
+      ]
+    },
+    {
+      section: ["Experiencia con masajes", "Massage Experience"],
+      questions: [
+        ["previousMassage", "¿Ha recibido masajes anteriormente?", "Have you received massage therapy before?", "yesno"],
+        ["reaction", "¿Ha presentado alguna reacción adversa?", "Have you experienced any adverse reaction?", "yesno"],
+        ["reactionDetails", "Si respondió sí, explique", "If yes, please explain", "textarea"]
+      ]
+    },
+    {
+      section: ["Drenaje linfático y posoperatorio", "Lymphatic & Postoperative Care"],
+      questions: [
+        ["lymphService", "¿Solicita drenaje linfático o atención posoperatoria?", "Are you requesting lymphatic drainage or postoperative care?", "yesno"],
+        ["swelling", "¿Presenta inflamación o retención de líquidos?", "Do you experience swelling or fluid retention?", "yesno"],
+        ["recentSurgery", "¿Ha tenido una cirugía recientemente?", "Have you had surgery recently?", "yesno"],
+        ["surgeryType", "¿Qué procedimiento le realizaron?", "What surgical procedure did you have?", "text"],
+        ["surgeryDate", "Fecha de la cirugía", "Surgery date", "date"],
+        ["surgeon", "Nombre del cirujano", "Surgeon's name", "text"],
+        ["medicalClearance", "¿Cuenta con autorización médica para el tratamiento?", "Do you have medical clearance for treatment?", "yesno"],
+        ["drains", "¿Tiene drenajes o heridas quirúrgicas?", "Do you have surgical drains or wounds?", "yesno"],
+        ["complications", "¿Ha tenido complicaciones posoperatorias?", "Have you experienced postoperative complications?", "yesno"],
+        ["complicationDetails", "Describa las complicaciones", "Describe any complications", "textarea"]
+      ]
+    }
+  ],
+
+  facial: [
+    {
+      section: ["Objetivos del tratamiento", "Treatment Goals"],
+      questions: [
+        ["concerns", "¿Cuáles son sus principales preocupaciones sobre su piel?", "What are your main skin concerns?", "textarea"],
+        ["skinType", "¿Cómo describiría su tipo de piel?", "How would you describe your skin type?", "skin"],
+        ["acne", "¿Presenta acné?", "Do you experience acne?", "yesno"],
+        ["melasma", "¿Tiene melasma o hiperpigmentación?", "Do you have melasma or hyperpigmentation?", "yesno"],
+        ["rosacea", "¿Tiene rosácea?", "Do you have rosacea?", "yesno"],
+        ["sensitivity", "¿Su piel es sensible o reactiva?", "Is your skin sensitive or reactive?", "yesno"],
+        ["redness", "¿Presenta enrojecimiento frecuente?", "Do you experience frequent redness?", "yesno"],
+        ["burning", "¿Experimenta ardor o picazón?", "Do you experience burning or itching?", "yesno"],
+        ["sunSpots", "¿Sus manchas empeoran con el sol?", "Do your dark spots worsen with sun exposure?", "yesno"]
+      ]
+    },
+    {
+      section: ["Rutina de cuidado facial", "Skincare Routine"],
+      questions: [
+        ["cleanser", "¿Qué limpiador utiliza?", "What cleanser do you use?", "text"],
+        ["serums", "¿Qué sérums utiliza?", "What serums do you use?", "text"],
+        ["moisturizer", "¿Utiliza crema hidratante?", "Do you use moisturizer?", "yesno"],
+        ["sunscreen", "¿Utiliza protector solar diariamente?", "Do you use sunscreen daily?", "yesno"],
+        ["spf", "¿Qué SPF utiliza?", "What SPF do you use?", "text"],
+        ["retinoids", "¿Utiliza retinol, tretinoína u otros retinoides?", "Do you use retinol, tretinoin or other retinoids?", "yesno"],
+        ["acids", "¿Utiliza ácidos exfoliantes?", "Do you use exfoliating acids?", "yesno"],
+        ["products", "Indique los productos y la fecha de su último uso", "List products and when you last used them", "textarea"]
+      ]
+    },
+    {
+      section: ["Tratamientos anteriores", "Previous Treatments"],
+      questions: [
+        ["facials", "¿Se ha realizado tratamientos faciales?", "Have you received facial treatments?", "yesno"],
+        ["peels", "¿Se ha realizado peelings químicos?", "Have you had chemical peels?", "yesno"],
+        ["needling", "¿Se ha realizado microneedling o nanoneedling?", "Have you had microneedling or nanoneedling?", "yesno"],
+        ["cosmelan", "¿Ha utilizado Cosmelan u otros despigmentantes?", "Have you used Cosmelan or other depigmenting treatments?", "yesno"],
+        ["laser", "¿Ha recibido tratamientos con láser?", "Have you had laser treatments?", "yesno"],
+        ["injectables", "¿Se ha aplicado bótox o rellenos?", "Have you had Botox or dermal fillers?", "yesno"],
+        ["waxing", "¿Se ha depilado recientemente con cera?", "Have you had recent facial waxing?", "yesno"],
+        ["previousDetails", "Indique tratamientos, fechas y reacciones", "List treatments, dates and reactions", "textarea"]
+      ]
+    },
+    {
+      section: ["Historia médica y contraindicaciones", "Medical History & Contraindications"],
+      questions: [
+        ["allergies", "¿Tiene alergias conocidas?", "Do you have known allergies?", "textarea"],
+        ["pregnancy", "¿Está embarazada o en período de lactancia?", "Are you pregnant or breastfeeding?", "yesno"],
+        ["herpes", "¿Tiene antecedentes de herpes labial?", "Do you have a history of cold sores?", "yesno"],
+        ["eczema", "¿Tiene eczema, psoriasis u otra condición cutánea?", "Do you have eczema, psoriasis or another skin condition?", "yesno"],
+        ["isotretinoin", "¿Utiliza o ha utilizado isotretinoína?", "Are you using or have you used isotretinoin?", "yesno"],
+        ["photosensitive", "¿Toma medicamentos que aumenten la sensibilidad al sol?", "Do you take photosensitizing medications?", "yesno"],
+        ["infection", "¿Tiene infecciones o heridas activas?", "Do you have active infections or open wounds?", "yesno"],
+        ["keloids", "¿Tiene antecedentes de cicatrices queloides?", "Do you have a history of keloid scarring?", "yesno"],
+        ["pih", "¿Ha presentado manchas después de lesiones o tratamientos?", "Have you experienced post-inflammatory hyperpigmentation?", "yesno"],
+        ["medications", "Indique sus medicamentos actuales", "List your current medications", "textarea"],
+        ["medicalDetails", "Información médica adicional y fechas relevantes", "Additional medical information and relevant dates", "textarea"]
+      ]
+    }
+  ]
+};
+
+function assessmentText(es, en) {
+  return assessmentLanguage === "es" ? es : en;
+}
+
+function assessmentField(question) {
+  const [key, es, en, type] = question;
+  const value = assessmentDraft[key] ?? "";
+  const label = assessmentText(es, en);
+  let control = "";
+
+  if (type === "yesno") {
+    control = `
+      <select data-assessment="${key}" onchange="updateAssessmentField(this)">
+        <option value="">${assessmentText("Seleccione", "Select")}</option>
+        <option value="yes" ${value === "yes" ? "selected" : ""}>${assessmentText("Sí", "Yes")}</option>
+        <option value="no" ${value === "no" ? "selected" : ""}>No</option>
+      </select>`;
+  } else if (type === "pressure") {
+    control = `
+      <select data-assessment="${key}" onchange="updateAssessmentField(this)">
+        <option value="">${assessmentText("Seleccione", "Select")}</option>
+        ${[
+          ["light", "Suave", "Light"],
+          ["medium", "Media", "Medium"],
+          ["firm", "Firme", "Firm"]
+        ].map(([v, a, b]) =>
+          `<option value="${v}" ${value === v ? "selected" : ""}>${assessmentText(a,b)}</option>`
+        ).join("")}
+      </select>`;
+  } else if (type === "skin") {
+    control = `
+      <select data-assessment="${key}" onchange="updateAssessmentField(this)">
+        <option value="">${assessmentText("Seleccione", "Select")}</option>
+        ${[
+          ["normal", "Normal", "Normal"],
+          ["dry", "Seca", "Dry"],
+          ["oily", "Grasa", "Oily"],
+          ["combination", "Mixta", "Combination"],
+          ["sensitive", "Sensible", "Sensitive"],
+          ["unsure", "No estoy seguro/a", "Not sure"]
+        ].map(([v,a,b]) =>
+          `<option value="${v}" ${value === v ? "selected" : ""}>${assessmentText(a,b)}</option>`
+        ).join("")}
+      </select>`;
+  } else if (type === "pain") {
+    control = `
+      <select data-assessment="${key}" onchange="updateAssessmentField(this)">
+        <option value="">${assessmentText("Seleccione", "Select")}</option>
+        ${Array.from({length:11},(_,i)=>
+          `<option value="${i}" ${String(value) === String(i) ? "selected" : ""}>${i}</option>`
+        ).join("")}
+      </select>`;
+  } else if (type === "textarea") {
+    control = `
+      <textarea data-assessment="${key}"
+        oninput="updateAssessmentField(this)">${esc(value)}</textarea>`;
+  } else {
+    control = `
+      <input type="${type}" data-assessment="${key}"
+        value="${esc(value)}"
+        oninput="updateAssessmentField(this)">`;
+  }
+
+  return `<label class="field">${esc(label)}${control}</label>`;
+}
+
+function updateAssessmentField(element) {
+  assessmentDraft[element.dataset.assessment] = element.value;
+}
+
+function switchAssessmentLanguage(value) {
+  assessmentLanguage = value;
+  renderAssessmentEditor();
+}
+
+function changeAssessmentType(value) {
+  if (assessmentType !== value) {
+    if (Object.keys(assessmentDraft).length &&
+        !confirm(assessmentText(
+          "¿Cambiar de formulario y descartar las respuestas actuales?",
+          "Switch forms and discard current answers?"
+        ))) {
+      renderAssessmentEditor();
+      return;
+    }
+    assessmentDraft = {};
+    assessmentSignature = "";
+  }
+
+  assessmentType = value;
+  renderAssessmentEditor();
+}
+
+function startAssessment(type = "massage", cid = null) {
+  if (!db.clients.length) {
+    alert(assessmentText("Primero crea un cliente ficticio.", "Create a fictional client first."));
+    return;
+  }
+
+  assessmentType = type;
+  assessmentLanguage = lang;
+  assessmentDraft = {};
+  assessmentSignature = "";
+  assessmentActive = true;
+
+  if (cid) selected = cid;
+
+  renderAssessmentEditor();
+}
+
+function closeAssessmentEditor() {
+  assessmentActive = false;
+  assessmentDraft = {};
+  assessmentSignature = "";
+  render();
+}
+
+function renderAssessmentEditor() {
+  const root = document.getElementById("content");
+  if (!root) return;
+
+  const cid = selected && client(selected)
+    ? selected
+    : db.clients[0]?.id;
+
+  root.innerHTML = `
+    <div class="card">
+      <div class="row">
+        <h2>Lady Heal · Assessment</h2>
+        <button class="btn secondary" onclick="closeAssessmentEditor()">
+          ${assessmentText("Cerrar", "Close")}
+        </button>
+      </div>
+
+      <p class="alert">
+        ${assessmentText(
+          "SOLO DEMOSTRACIÓN. No introduzca información médica real.",
+          "DEMO ONLY. Do not enter real medical information."
+        )}
+      </p>
+
+      <div class="formgrid">
+        <label>${assessmentText("Idioma", "Language")}
+          <select onchange="switchAssessmentLanguage(this.value)">
+            <option value="es" ${assessmentLanguage==="es"?"selected":""}>Español</option>
+            <option value="en" ${assessmentLanguage==="en"?"selected":""}>English</option>
+          </select>
+        </label>
+
+        <label>${assessmentText("Cliente", "Client")}
+          <select id="assessmentClient">
+            ${db.clients.map(c=>`
+              <option value="${esc(c.id)}" ${c.id===cid?"selected":""}>
+                ${esc(c.name)}
+              </option>`).join("")}
+          </select>
+        </label>
+
+        <label>${assessmentText("Tipo de evaluación", "Assessment type")}
+          <select onchange="changeAssessmentType(this.value)">
+            <option value="massage" ${assessmentType==="massage"?"selected":""}>
+              Massage Assessment
+            </option>
+            <option value="facial" ${assessmentType==="facial"?"selected":""}>
+              Facial Assessment
+            </option>
+          </select>
+        </label>
+      </div>
+    </div>
+
+    ${assessmentQuestions[assessmentType].map(group=>`
+      <div class="card section">
+        <h2>${assessmentText(...group.section)}</h2>
+        <div class="formgrid">
+          ${group.questions.map(assessmentField).join("")}
+        </div>
+      </div>
+    `).join("")}
+
+    <div class="card section">
+      <h2>${assessmentText("Consentimiento de demostración", "Demo Consent")}</h2>
+      <p class="muted">
+        ${assessmentText(
+          "Esta firma es únicamente una prueba de la interfaz y no constituye consentimiento informado para un tratamiento real.",
+          "This signature is for interface testing only and is not informed consent for a real treatment."
+        )}
+      </p>
+
+      <label>
+        <input id="assessmentAgree" type="checkbox"
+          style="display:inline;width:auto;margin-right:8px">
+        ${assessmentText(
+          "Confirmo que estoy utilizando información ficticia.",
+          "I confirm that I am using fictional information."
+        )}
+      </label>
+
+      <p>${assessmentText("Firma de prueba", "Test signature")}</p>
+
+      <canvas id="assessmentCanvas"
+        width="600" height="180"
+        style="width:100%;height:180px;background:white;border:1px solid #ded6cc;border-radius:10px;touch-action:none">
+      </canvas>
+
+      <button class="btn secondary" onclick="clearAssessmentSignature()">
+        ${assessmentText("Borrar firma", "Clear signature")}
+      </button>
+    </div>
+
+    <div class="card section">
+      <h2>${assessmentText("Evaluación profesional", "Professional Assessment")}</h2>
+      <label>${assessmentText("Observaciones", "Observations")}
+        <textarea data-assessment="professionalNotes"
+          oninput="updateAssessmentField(this)">${esc(assessmentDraft.professionalNotes||"")}</textarea>
+      </label>
+      <label>${assessmentText("Plan de tratamiento", "Treatment plan")}
+        <textarea data-assessment="treatmentPlan"
+          oninput="updateAssessmentField(this)">${esc(assessmentDraft.treatmentPlan||"")}</textarea>
+      </label>
+    </div>
+
+    <div class="section row">
+      <button class="btn" onclick="saveBilingualAssessment()">
+        ${assessmentText("Guardar evaluación", "Save Assessment")}
+      </button>
+      <button class="btn secondary" onclick="closeAssessmentEditor()">
+        ${assessmentText("Cancelar", "Cancel")}
+      </button>
+    </div>
+  `;
+
+  initializeAssessmentCanvas();
+}
+
+function initializeAssessmentCanvas() {
+  const canvas = document.getElementById("assessmentCanvas");
+  if (!canvas) return;
+
+  const ctx = canvas.getContext("2d");
+  ctx.lineWidth = 2.5;
+  ctx.lineCap = "round";
+  ctx.strokeStyle = "#3C322D";
+
+  if (assessmentSignature) {
+    const img = new Image();
+    img.onload = () => ctx.drawImage(img,0,0,canvas.width,canvas.height);
+    img.src = assessmentSignature;
+  }
+
+  let drawing = false;
+  let hasMoved = false;
+
+  function point(e) {
+    const r = canvas.getBoundingClientRect();
+    return {
+      x:(e.clientX-r.left)*canvas.width/r.width,
+      y:(e.clientY-r.top)*canvas.height/r.height
+    };
+  }
+
+  canvas.addEventListener("pointerdown", e => {
+    drawing = true;
+    hasMoved = false;
+    canvas.setPointerCapture(e.pointerId);
+    const p = point(e);
+    ctx.beginPath();
+    ctx.moveTo(p.x,p.y);
+    ctx.lineTo(p.x,p.y);
+    ctx.stroke();
+    assessmentSignature = canvas.toDataURL();
+  });
+
+  canvas.addEventListener("pointermove", e => {
+    if (!drawing) return;
+    const p = point(e);
+    ctx.lineTo(p.x,p.y);
+    ctx.stroke();
+    hasMoved = true;
+  });
+
+  function finish() {
+    if (!drawing) return;
+    drawing = false;
+    assessmentSignature = canvas.toDataURL();
+  }
+
+  canvas.addEventListener("pointerup", finish);
+  canvas.addEventListener("pointercancel", finish);
+}
+
+function clearAssessmentSignature() {
+  assessmentSignature = "";
+  const canvas = document.getElementById("assessmentCanvas");
+  if (canvas) canvas.getContext("2d").clearRect(0,0,canvas.width,canvas.height);
+}
+
+function saveBilingualAssessment() {
+  const cid = document.getElementById("assessmentClient")?.value;
+
+  if (!cid || !client(cid)) {
+    alert(assessmentText("Seleccione un cliente.", "Select a client."));
+    return;
+  }
+
+  if (!document.getElementById("assessmentAgree")?.checked) {
+    alert(assessmentText(
+      "Confirme que los datos son ficticios.",
+      "Confirm that the data is fictional."
+    ));
+    return;
+  }
+
+  if (!assessmentSignature) {
+    alert(assessmentText(
+      "Agregue una firma de prueba.",
+      "Add a test signature."
+    ));
+    return;
+  }
+
+  const record = {
+    id:id(),
+    client:cid,
+    type:assessmentType,
+    date:new Date().toISOString(),
+    language:assessmentLanguage,
+    answers:{...assessmentDraft},
+    signature:assessmentSignature,
+    demo:true
+  };
+
+  db.assessments = db.assessments || [];
+  db.assessments.push(record);
+
+  try {
+    persist();
+  } catch (error) {
+    db.assessments.pop();
+    alert(assessmentText(
+      "No se pudo guardar. El almacenamiento del navegador puede estar lleno.",
+      "Could not save. Browser storage may be full."
+    ));
+    return;
+  }
+
+  assessmentActive = false;
+  assessmentDraft = {};
+  assessmentSignature = "";
+
+  selected = cid;
+  page = "profile";
+  tab = "medical";
+  showForm = false;
+
+  render();
+
+  alert(assessmentText(
+    "Evaluación de demostración guardada.",
+    "Demo assessment saved."
+  ));
+}
+
+const originalAssessmentContent = assessmentContent;
+
+assessmentContent = function(cid) {
+  const records = (db.assessments || [])
+    .filter(r => !cid || r.client === cid)
+    .sort((a,b) => String(b.date).localeCompare(String(a.date)));
+
+  return `
+    <div class="card">
+      <h2>${t("forms")}</h2>
+
+      <div class="row">
+        <button class="btn"
+          onclick="startAssessment('massage',${cid ? `'${cid}'` : 'null'})">
+          💆 Massage Assessment
+        </button>
+
+        <button class="btn"
+          onclick="startAssessment('facial',${cid ? `'${cid}'` : 'null'})">
+          ✨ Facial Assessment
+        </button>
+      </div>
+    </div>
+
+    <div class="section">
+      ${records.map(r=>`
+        <div class="card section">
+          <div class="row">
+            <b>${esc(cname(r.client))}</b>
+            <span class="pill">${esc(r.date)}</span>
+          </div>
+
+          <h3>${r.type==="massage"
+            ? "Massage Assessment"
+            : r.type==="facial"
+              ? "Facial Assessment"
+              : esc(t(r.type))}</h3>
+
+          ${r.answers
+            ? Object.entries(r.answers).map(([k,v])=>`
+                <p><b>${esc(k)}:</b> ${esc(v)}</p>
+              `).join("")
+            : Object.entries(r)
+                .filter(([k,v])=>!["id","client","type","date"].includes(k))
+                .map(([k,v])=>`<p><b>${esc(t(k))}:</b> ${esc(v)}</p>`)
+                .join("")
+          }
+
+          ${r.signature
+            ? `<p><b>Demo signature:</b></p>
+               <img src="${r.signature}" alt="Demo signature"
+                 style="max-width:100%;border:1px solid #ddd;border-radius:8px">`
+            : ""}
+        </div>
+      `).join("") || `<div class="card empty">${t("noData")}</div>`}
+    </div>
+  `;
+};
+
+const originalRenderAssessment = render;
+
+render = function() {
+  if (assessmentActive) {
+    document.documentElement.lang = assessmentLanguage;
+    document.getElementById("language").textContent =
+      assessmentLanguage==="es" ? "English" : "Español";
+    document.getElementById("title").textContent = "Assessment";
+    renderAssessmentEditor();
+    return;
+  }
+
+  originalRenderAssessment();
+};
+
+const originalLanguageClick = document.getElementById("language").onclick;
+
+document.getElementById("language").onclick = () => {
+  if (assessmentActive) {
+    switchAssessmentLanguage(assessmentLanguage==="es"?"en":"es");
+  } else {
+    originalLanguageClick();
+  }
+};</script></body></html>
