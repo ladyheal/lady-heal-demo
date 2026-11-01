@@ -4,4 +4,330 @@
 const dict={es:{dashboard:'Panel principal',clients:'Clientes',appointments:'Citas',soap:'Notas SOAP',billing:'Paquetes y pagos',forms:'Evaluaciones',demo:'PROTOTIPO CON DATOS FICTICIOS. No introduzcas información médica real: este archivo no tiene autenticación, cifrado ni servidor seguro.',today:'Citas registradas',active:'Clientes',pending:'Saldo pendiente',sessions:'Sesiones disponibles',recent:'Próximas citas',quick:'Búsqueda rápida',search:'Buscar por nombre, teléfono o correo…',name:'Nombre',phone:'Teléfono',email:'Correo',treatment:'Tratamiento',actions:'Acciones',open:'Abrir expediente',newClient:'Nuevo cliente',save:'Guardar',cancel:'Cancelar',profile:'Expediente',overview:'Resumen',medical:'Historia clínica',photos:'Fotografías',back:'Volver a clientes',dob:'Fecha de nacimiento',notes:'Observaciones',emergency:'Contacto de emergencia',facial:'Evaluación facial',postop:'Evaluación postoperatoria y drenaje',allergies:'Alergias',medications:'Medicamentos',conditions:'Antecedentes médicos',surgery:'Cirugía y fecha',surgeon:'Cirujano',contra:'Contraindicaciones / precauciones',skin:'Tipo de piel',fitz:'Fototipo Fitzpatrick',concerns:'Condiciones de la piel',products:'Productos actuales',s:'S — Subjetivo',o:'O — Objetivo',a:'A — Evaluación',p:'P — Plan',newSOAP:'Nueva nota SOAP',client:'Cliente',date:'Fecha',service:'Servicio',status:'Estado',newAppt:'Nueva cita',time:'Hora',duration:'Duración (min)',location:'Lugar',package:'Paquete',price:'Precio total ($)',paid:'Pagado ($)',used:'Sesiones utilizadas',total:'Total de sesiones',newPackage:'Nuevo paquete',noData:'Sin registros todavía.',photoNote:'En esta versión inicial no se almacenan fotografías. Esta función se habilitará con almacenamiento privado y seguro.',completed:'Completada',scheduled:'Programada',cancelled:'Cancelada',details:'Detalles',select:'Seleccionar cliente',paymentNote:'Los pagos se registran manualmente; Square sigue siendo el procesador de pagos.',required:'Completa los campos obligatorios.',saved:'Guardado en este navegador (solo demostración).',demoOnly:'Los cambios de esta demostración se guardan únicamente en este navegador. No uses datos reales.',deleteDemo:'Restablecer demostración',confirmReset:'¿Restablecer todos los datos de demostración?',none:'Sin coincidencias',view:'Ver'},en:{dashboard:'Dashboard',clients:'Clients',appointments:'Appointments',soap:'SOAP Notes',billing:'Packages & Payments',forms:'Assessments',demo:'DEMO WITH FICTIONAL DATA. Do not enter real medical information: this file has no authentication, encryption, or secure server.',today:'Scheduled appointments',active:'Clients',pending:'Outstanding balance',sessions:'Sessions remaining',recent:'Upcoming appointments',quick:'Quick search',search:'Search by name, phone or email…',name:'Name',phone:'Phone',email:'Email',treatment:'Treatment',actions:'Actions',open:'Open profile',newClient:'New client',save:'Save',cancel:'Cancel',profile:'Client profile',overview:'Overview',medical:'Medical history',photos:'Photos',back:'Back to clients',dob:'Date of birth',notes:'Notes',emergency:'Emergency contact',facial:'Facial assessment',postop:'Postoperative & lymphatic assessment',allergies:'Allergies',medications:'Medications',conditions:'Medical history',surgery:'Surgery and date',surgeon:'Surgeon',contra:'Contraindications / precautions',skin:'Skin type',fitz:'Fitzpatrick phototype',concerns:'Skin concerns',products:'Current products',s:'S — Subjective',o:'O — Objective',a:'A — Assessment',p:'P — Plan',newSOAP:'New SOAP note',client:'Client',date:'Date',service:'Service',status:'Status',newAppt:'New appointment',time:'Time',duration:'Duration (min)',location:'Location',package:'Package',price:'Total price ($)',paid:'Paid ($)',used:'Sessions used',total:'Total sessions',newPackage:'New package',noData:'No records yet.',photoNote:'Photos are not stored in this initial version. This feature requires secure private storage.',completed:'Completed',scheduled:'Scheduled',cancelled:'Cancelled',details:'Details',select:'Select client',paymentNote:'Payments are entered manually; Square remains your payment processor.',required:'Please complete the required fields.',saved:'Saved in this browser (demo only).',demoOnly:'Changes in this demo are stored only in this browser. Do not use real data.',deleteDemo:'Reset demo',confirmReset:'Reset all demo data?',none:'No matches',view:'View'}};
 let lang=localStorage.getItem('lh_lang')||'es',page='dashboard',selected=null,tab='overview',showForm=false,filter='';const sample={clients:[{id:'c1',name:'Alex Morgan (DEMO)',phone:'(555) 010-1001',email:'alex@example.com',dob:'1990-04-12',emergency:'',notes:''},{id:'c2',name:'Jordan Lee (DEMO)',phone:'(555) 010-1002',email:'jordan@example.com',dob:'1987-11-20',emergency:'',notes:''}],appointments:[{id:'a1',client:'c1',date:'2026-10-28',time:'10:00',service:'Lymphatic drainage',duration:60,location:'Spa',status:'scheduled'},{id:'a2',client:'c2',date:'2026-10-29',time:'14:00',service:'Facial',duration:90,location:'Spa',status:'scheduled'}],packages:[{id:'p1',client:'c1',service:'Postoperative care',total:10,used:4,price:1200,paid:600}],soaps:[],assessments:[]};let db;try{db=JSON.parse(localStorage.getItem('lh_demo_db'))||structuredClone(sample)}catch{db=structuredClone(sample)};function persist(){localStorage.setItem('lh_demo_db',JSON.stringify(db))}function t(k){return dict[lang][k]||k}function esc(x){return String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}function client(id){return db.clients.find(x=>x.id===id)}function cname(id){return client(id)?.name||'—'}function money(n){return '$'+Number(n||0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}function id(){return 'x'+Date.now().toString(36)+Math.random().toString(36).slice(2,7)}function navto(p){page=p;selected=null;showForm=false;filter='';render()}function openClient(cid,which='overview'){page='profile';selected=cid;tab=which;showForm=false;render()}function btn(text,fn,cls='btn'){return `<button class="${cls}" onclick="${fn}">${text}</button>`}function fields(items){return items.map(([key,label,type='text',required=false])=>`<label class="field">${t(label)}<${type==='textarea'?'textarea':'input'} name="${key}" ${type==='textarea'?'':`type="${type}"`} ${required?'required':''}>${type==='textarea'?'</textarea>':''}${type==='textarea'?'':'</input>'}</label>`).join('')}function clientOptions(){return db.clients.map(c=>`<option value="${esc(c.id)}" ${c.id===selected?'selected':''}>${esc(c.name)}</option>`).join('')}function formWrap(inner,submit){return `<form id="entry" onsubmit="${submit}(event)" class="card section"><div class="formgrid">${inner}</div><div class="row">${btn(t('save'),'','btn submit')}<button type="submit" class="btn">${t('save')}</button>${btn(t('cancel'),'showForm=false;render()','btn secondary')}</div></form>`.replace('<button class="btn submit" onclick=""></button>','')};function form(inner,submit){return `<form class="card section" onsubmit="${submit}(event)"><div class="formgrid">${inner}</div><div class="row"><button type="submit" class="btn">${t('save')}</button>${btn(t('cancel'),'showForm=false;render()','btn secondary')}</div></form>`}function data(e){e.preventDefault();return Object.fromEntries(new FormData(e.target).entries())}function done(){persist();showForm=false;render()}
 function render(){document.documentElement.lang=lang;document.getElementById('language').textContent=lang==='es'?'English':'Español';document.getElementById('warning').textContent=t('demo');document.getElementById('sideNote').textContent=t('demoOnly');let names=['dashboard','clients','appointments','soap','billing','forms'];document.getElementById('nav').innerHTML=names.map((p,i)=>`<button class="nav ${page===p||(page==='profile'&&p==='clients')?'active':''}" onclick="navto('${p}')">${['◫','♙','▦','✎','＄','♡'][i]} &nbsp;${t(p)}</button>`).join('');document.getElementById('title').textContent=page==='profile'?t('profile'):t(page);document.getElementById('content').innerHTML=({dashboard:dashboard,clients:clients,profile:profile,appointments:appointments,soap:soap,billing:billing,forms:assessments})[page]();if(page==='clients'){let s=document.getElementById('q');s.value=filter;s.focus();s.setSelectionRange(s.value.length,s.value.length)}}function clientRows(list){return `<div class="tablewrap"><table><thead><tr><th>${t('name')}</th><th>${t('phone')}</th><th>${t('email')}</th><th>${t('actions')}</th></tr></thead><tbody>${list.map(c=>`<tr class="clickable" onclick="openClient('${c.id}')"><td><b>${esc(c.name)}</b></td><td>${esc(c.phone)}</td><td>${esc(c.email)}</td><td><span class="tag">${t('view')} →</span></td></tr>`).join('')}</tbody></table></div>${list.length?'':`<div class="empty">${t('none')}</div>`}`}function dashboard(){let bal=db.packages.reduce((a,p)=>a+Number(p.price)-Number(p.paid),0),rem=db.packages.reduce((a,p)=>a+Number(p.total)-Number(p.used),0);return `<div class="grid">${[[t('today'),db.appointments.filter(a=>a.status==='scheduled').length],[t('active'),db.clients.length],[t('pending'),money(bal)],[t('sessions'),rem]].map(([k,v])=>`<div class="card"><div class="muted">${k}</div><div class="metric">${v}</div></div>`).join('')}</div><div class="columns section"><div class="card"><h2>${t('quick')}</h2><input class="search" placeholder="${t('search')}" oninput="document.getElementById('quickResults').innerHTML=clientRows(db.clients.filter(c=>(c.name+' '+c.phone+' '+c.email).toLowerCase().includes(this.value.toLowerCase())))"><div id="quickResults">${clientRows(db.clients)}</div></div><div class="card"><h2>${t('recent')}</h2>${db.appointments.filter(a=>a.status==='scheduled').sort((a,b)=>(a.date+a.time).localeCompare(b.date+b.time)).slice(0,6).map(a=>`<div class="appointment"><b>${esc(cname(a.client))}</b><div class="muted">${esc(a.date)} · ${esc(a.time)} · ${esc(a.service)}</div></div>`).join('')||t('noData')}</div></div>`}function clients(){let list=db.clients.filter(c=>(c.name+' '+c.phone+' '+c.email).toLowerCase().includes(filter.toLowerCase()));return `<div class="row"><div class="muted">${db.clients.length} ${t('clients').toLowerCase()}</div>${btn('+ '+t('newClient'),'showForm=!showForm;render()')}</div>${showForm?form(fields([['name','name','text',true],['phone','phone','tel'],['email','email','email'],['dob','dob','date'],['emergency','emergency'],['notes','notes','textarea']]),'addClient'):''}<div class="section"><input id="q" class="search" placeholder="${t('search')}" oninput="filter=this.value;document.getElementById('clientList').innerHTML=clientRows(db.clients.filter(c=>(c.name+' '+c.phone+' '+c.email).toLowerCase().includes(filter.toLowerCase())))"><div id="clientList" class="card section">${clientRows(list)}</div></div>`}function addClient(e){let x=data(e);db.clients.push({...x,id:id()});done()}function profile(){let c=client(selected);if(!c)return `<p>${t('noData')}</p>`;let tabs=['overview','medical','soap','billing','appointments','photos'];return `${btn('← '+t('back'),"navto('clients')",'btn secondary')}<div class="card section"><h2>${esc(c.name)}</h2><div class="muted">${esc(c.phone)} · ${esc(c.email)} · ${esc(c.dob)}</div></div><div class="tabs">${tabs.map(k=>`<button class="tab ${tab===k?'active':''}" onclick="tab='${k}';showForm=false;render()">${t(k)}</button>`).join('')}</div>${tab==='overview'?`<div class="columns"><div class="card"><h3>${t('details')}</h3><p>${t('emergency')}: ${esc(c.emergency)||'—'}</p><p>${t('notes')}: ${esc(c.notes)||'—'}</p></div><div class="card"><h3>${t('package')}</h3>${db.packages.filter(p=>p.client===c.id).map(p=>`<p>${esc(p.service)} · ${p.total-p.used} / ${p.total} ${t('sessions').toLowerCase()} · ${money(p.price-p.paid)}</p>`).join('')||t('noData')}</div></div>`:tab==='medical'?assessmentContent(c.id):tab==='soap'?soapContent(c.id):tab==='billing'?billingContent(c.id):tab==='appointments'?appointmentContent(c.id):`<div class="card">${t('photoNote')}</div>`}`}function assessmentContent(cid){let records=db.assessments.filter(x=>!cid||x.client===cid);return `<div class="row"><div class="muted">${t('medical')}</div>${btn('+ '+t('forms'),'showForm=!showForm;render()')}</div>${showForm?form(`<label>${t('client')}<select name="client" required>${clientOptions()}</select></label><label>${t('forms')}<select name="type"><option value="postop">${t('postop')}</option><option value="facial">${t('facial')}</option></select></label>${fields([['date','date','date',true],['conditions','conditions','textarea'],['allergies','allergies','textarea'],['medications','medications','textarea'],['surgery','surgery','textarea'],['surgeon','surgeon'],['contra','contra','textarea'],['skin','skin'],['fitz','fitz'],['concerns','concerns','textarea'],['products','products','textarea']])}`,'addAssessment'):''}<div class="section">${records.map(r=>`<div class="card section"><div class="row"><b>${esc(cname(r.client))} · ${t(r.type)}</b><span class="pill">${esc(r.date)}</span></div>${['conditions','allergies','medications','surgery','surgeon','contra','skin','fitz','concerns','products'].filter(k=>r[k]).map(k=>`<p><b>${t(k)}:</b> ${esc(r[k])}</p>`).join('')}</div>`).join('')||`<div class="card empty">${t('noData')}</div>`}</div>`}function addAssessment(e){db.assessments.push({...data(e),id:id()});done()}function assessments(){return assessmentContent(null)}function soapContent(cid){let list=db.soaps.filter(x=>!cid||x.client===cid);return `<div class="row"><span class="muted">SOAP</span>${btn('+ '+t('newSOAP'),'showForm=!showForm;render()')}</div>${showForm?form(`<label>${t('client')}<select name="client" required>${clientOptions()}</select></label>${fields([['date','date','date',true],['service','service','text',true],['s','s','textarea',true],['o','o','textarea',true],['a','a','textarea',true],['p','p','textarea',true]])}`,'addSOAP'):''}<div class="section">${list.map(r=>`<div class="card section"><div class="row"><b>${esc(cname(r.client))} · ${esc(r.service)}</b><span class="pill">${esc(r.date)}</span></div>${['s','o','a','p'].map(k=>`<p><b>${t(k)}:</b> ${esc(r[k])}</p>`).join('')}</div>`).join('')||`<div class="card empty">${t('noData')}</div>`}</div>`}function addSOAP(e){db.soaps.push({...data(e),id:id()});done()}function soap(){return soapContent(null)}function appointmentContent(cid){let list=db.appointments.filter(x=>!cid||x.client===cid).sort((a,b)=>(a.date+a.time).localeCompare(b.date+b.time));return `<div class="row"><span class="muted">${t('appointments')}</span>${btn('+ '+t('newAppt'),'showForm=!showForm;render()')}</div>${showForm?form(`<label>${t('client')}<select name="client" required>${clientOptions()}</select></label>${fields([['date','date','date',true],['time','time','time',true],['service','service','text',true],['duration','duration','number',true],['location','location']])}<label>${t('status')}<select name="status"><option value="scheduled">${t('scheduled')}</option><option value="completed">${t('completed')}</option><option value="cancelled">${t('cancelled')}</option></select></label>`,'addAppointment'):''}<div class="card section tablewrap"><table><thead><tr>${['date','time','client','service','status'].map(x=>`<th>${t(x)}</th>`).join('')}</tr></thead><tbody>${list.map(a=>`<tr><td>${esc(a.date)}</td><td>${esc(a.time)}</td><td>${esc(cname(a.client))}</td><td>${esc(a.service)}</td><td><select aria-label="${t('status')}" onchange="changeStatus('${a.id}',this.value)">${['scheduled','completed','cancelled'].map(k=>`<option value="${k}" ${a.status===k?'selected':''}>${t(k)}</option>`).join('')}</select></td></tr>`).join('')}</tbody></table>${list.length?'':`<div class="empty">${t('noData')}</div>`}</div>`}function addAppointment(e){db.appointments.push({...data(e),id:id()});done()}function changeStatus(aid,v){let a=db.appointments.find(x=>x.id===aid);if(a){a.status=v;persist();render()}}function appointments(){return appointmentContent(null)}function billingContent(cid){let list=db.packages.filter(x=>!cid||x.client===cid);return `<div class="row"><span class="muted">${t('paymentNote')}</span>${btn('+ '+t('newPackage'),'showForm=!showForm;render()')}</div>${showForm?form(`<label>${t('client')}<select name="client" required>${clientOptions()}</select></label>${fields([['service','service','text',true],['total','total','number',true],['used','used','number',true],['price','price','number',true],['paid','paid','number',true]])}`,'addPackage'):''}<div class="card section tablewrap"><table><thead><tr>${['client','service','total','used','paid','pending'].map(x=>`<th>${t(x)}</th>`).join('')}</tr></thead><tbody>${list.map(p=>`<tr><td>${esc(cname(p.client))}</td><td>${esc(p.service)}</td><td>${p.total}</td><td><input style="width:75px" aria-label="${t('used')}" type="number" min="0" max="${p.total}" value="${p.used}" onchange="editPackage('${p.id}','used',this.value)"></td><td><input style="width:115px" aria-label="${t('paid')}" type="number" min="0" max="${p.price}" step="0.01" value="${p.paid}" onchange="editPackage('${p.id}','paid',this.value)"></td><td>${money(p.price-p.paid)}</td></tr>`).join('')}</tbody></table>${list.length?'':`<div class="empty">${t('noData')}</div>`}</div>`}function addPackage(e){let p=data(e);for(let k of ['total','used','price','paid'])p[k]=Number(p[k]);if(p.used>p.total||p.paid>p.price||Object.values(p).some(v=>typeof v==='number'&&v<0)){alert('Check package values');return}db.packages.push({...p,id:id()});done()}function editPackage(pid,k,v){let p=db.packages.find(x=>x.id===pid),n=Number(v);if(!p||!Number.isFinite(n)||n<0||n>Number(k==='used'?p.total:p.price)){alert('Invalid value');render();return}p[k]=n;done()}function billing(){return billingContent(null)}document.getElementById('language').onclick=()=>{lang=lang==='es'?'en':'es';localStorage.setItem('lh_lang',lang);render()};render();
-</script></body></html>
+/* LADY HEAL — PAYMENTS MODULE */
+
+db.payments = db.payments || [];
+
+const originalProfile = profile;
+
+profile = function () {
+  const c = client(selected);
+  if (!c) return originalProfile();
+
+  if (tab === 'payments') {
+    return `
+      <button class="btn secondary"
+        onclick="tab='overview';render()">
+        ← Back
+      </button>
+
+      <div class="card section">
+        <h2>${esc(c.name)}</h2>
+        <h3>Payment History</h3>
+
+        <button class="btn"
+          onclick="openPayment()">
+          + New Payment
+        </button>
+
+        <div class="section">
+          ${paymentHistory(c.id)}
+        </div>
+      </div>
+    `;
+  }
+
+  return originalProfile().replace(
+    '<div class="tabs">',
+    `<div class="tabs">
+      <button class="tab"
+        onclick="tab='payments';render()">
+        💳 Payments
+      </button>
+      <button class="btn"
+        onclick="openPayment()">
+        + New Payment
+      </button>`
+  );
+};
+
+let paymentAmount = "";
+let paymentTip = 0;
+let paymentCustom = false;
+
+function openPayment() {
+  if (!selected || !client(selected)) {
+    alert("Select a client first.");
+    return;
+  }
+
+  paymentAmount = "";
+  paymentTip = 0;
+  paymentCustom = false;
+
+  const overlay = document.createElement("div");
+  overlay.id = "paymentOverlay";
+
+  overlay.style.cssText = `
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,.55);
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    z-index:9999;
+    padding:15px;
+  `;
+
+  overlay.innerHTML = `
+    <div style="
+      background:#F7F3EC;
+      padding:24px;
+      border-radius:20px;
+      width:100%;
+      max-width:390px;
+      max-height:90vh;
+      overflow:auto;
+      text-align:center;
+    ">
+
+      <h2>Lady Heal</h2>
+      <h3>Payment</h3>
+
+      <p id="paymentDisplay"
+        style="font-size:38px">
+        $0.00
+      </p>
+
+      <div id="numberPad"
+        style="
+          display:grid;
+          grid-template-columns:repeat(3,1fr);
+          gap:10px;
+        ">
+      </div>
+
+      <h3 style="margin-top:20px">
+        Select Tip
+      </h3>
+
+      <div id="tipButtons"
+        style="
+          display:grid;
+          grid-template-columns:repeat(4,1fr);
+          gap:6px;
+        ">
+      </div>
+
+      <div style="margin-top:12px">
+        <button class="btn secondary"
+          onclick="setTip(0)">
+          No Tip
+        </button>
+
+        <button class="btn secondary"
+          onclick="customTip()">
+          Custom Tip
+        </button>
+      </div>
+
+      <div id="paymentSummary"
+        style="margin:20px 0">
+      </div>
+
+      <button class="btn"
+        onclick="confirmPayment()">
+        Confirm Payment
+      </button>
+
+      <button class="btn secondary"
+        onclick="closePayment()">
+        Cancel
+      </button>
+
+    </div>
+  `;
+
+  document.body.appendChild(overlay);
+
+  const pad = document.getElementById("numberPad");
+
+  ["1","2","3","4","5","6","7","8","9",
+   "C","0","⌫"].forEach(n => {
+
+    const b = document.createElement("button");
+    b.textContent = n;
+    b.className = "btn secondary";
+    b.style.fontSize = "24px";
+    b.style.padding = "15px";
+
+    b.onclick = () => pressNumber(n);
+
+    pad.appendChild(b);
+  });
+
+  const tips = document.getElementById("tipButtons");
+
+  [10,15,20,25].forEach(n => {
+    const b = document.createElement("button");
+
+    b.className = "btn secondary";
+    b.textContent = n + "%";
+
+    b.onclick = () => setTip(n);
+
+    tips.appendChild(b);
+  });
+
+  updatePayment();
+}
+
+function pressNumber(n) {
+  if (n === "C") {
+    paymentAmount = "";
+  } else if (n === "⌫") {
+    paymentAmount = paymentAmount.slice(0,-1);
+  } else {
+    if (paymentAmount.length < 9) {
+      paymentAmount += n;
+    }
+  }
+
+  updatePayment();
+}
+
+function getAmount() {
+  return Number(paymentAmount || 0) / 100;
+}
+
+function setTip(n) {
+  paymentTip = n;
+  paymentCustom = false;
+  updatePayment();
+}
+
+function customTip() {
+  const value = prompt("Enter custom tip amount ($)");
+
+  if (value === null) return;
+
+  const n = Number(value);
+
+  if (!Number.isFinite(n) || n < 0) {
+    alert("Invalid tip amount");
+    return;
+  }
+
+  paymentTip = Math.round(n * 100) / 100;
+  paymentCustom = true;
+
+  updatePayment();
+}
+
+function getTipAmount() {
+  const amount = getAmount();
+
+  return paymentCustom
+    ? paymentTip
+    : Math.round(amount * paymentTip) / 100;
+}
+
+function updatePayment() {
+  const amount = getAmount();
+  const tip = getTipAmount();
+  const total = amount + tip;
+
+  document.getElementById("paymentDisplay")
+    .textContent = money(amount);
+
+  document.getElementById("paymentSummary")
+    .innerHTML = `
+      <p>Service: ${money(amount)}</p>
+      <p>Tip: ${money(tip)}</p>
+      <h2>Total: ${money(total)}</h2>
+    `;
+}
+
+function confirmPayment() {
+  const amount = getAmount();
+
+  if (amount <= 0) {
+    alert("Enter service amount");
+    return;
+  }
+
+  const tip = getTipAmount();
+  const total = Math.round((amount + tip) * 100) / 100;
+
+  const overlay = document.getElementById("paymentOverlay");
+
+  overlay.querySelector("div").innerHTML = `
+    <h2>Confirm Payment</h2>
+
+    <p>Client: ${esc(cname(selected))}</p>
+    <p>Service: ${money(amount)}</p>
+    <p>Tip: ${money(tip)}</p>
+
+    <h2>Total: ${money(total)}</h2>
+
+    <p class="muted">
+      Save only after receiving payment
+      on your iPhone.
+    </p>
+
+    <button class="btn"
+      onclick="savePayment()">
+      Save Payment
+    </button>
+
+    <button class="btn secondary"
+      onclick="closePayment()">
+      Cancel
+    </button>
+  `;
+}
+
+function savePayment() {
+  const amount = getAmount();
+  const tip = getTipAmount();
+
+  db.payments.push({
+    id: id(),
+    client: selected,
+    date: new Date().toISOString(),
+    amount: amount,
+    tip: tip,
+    total: Math.round((amount + tip) * 100) / 100
+  });
+
+  persist();
+  closePayment();
+
+  tab = "payments";
+  render();
+
+  alert("Payment saved successfully");
+}
+
+function paymentHistory(cid) {
+  const records = db.payments
+    .filter(p => p.client === cid)
+    .sort((a,b) => b.date.localeCompare(a.date));
+
+  if (!records.length) {
+    return `<p>No payments recorded.</p>`;
+  }
+
+  return records.map(p => `
+    <div class="card section">
+      <p>${esc(new Date(p.date).toLocaleString())}</p>
+      <p>Service: ${money(p.amount)}</p>
+      <p>Tip: ${money(p.tip)}</p>
+      <h3>Total: ${money(p.total)}</h3>
+    </div>
+  `).join("");
+}
+
+function closePayment() {
+  document.getElementById("paymentOverlay")?.remove();
+}</script></body></html>
